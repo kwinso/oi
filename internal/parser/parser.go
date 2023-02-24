@@ -56,20 +56,18 @@ func (p *Parser) Parse() (*ast.Program, *ParsingError) {
 	return program, nil
 }
 
-func (p *Parser) createPeekError(msg string) *ParsingError {
-	return &ParsingError{msg, p.peekToken}
-}
-
 func (p *Parser) parseStatement() (ast.Statement, *ParsingError) {
 	switch p.curToken.Type {
 	case token.LET:
 		return p.parseLetStatement()
+	case token.RETURN:
+		return p.parseReturnStatement(), nil
 	default:
 		return nil, nil
 	}
 }
 
-func (p *Parser) parseLetStatement() (ast.Statement, *ParsingError) {
+func (p *Parser) parseLetStatement() (*ast.LetStatement, *ParsingError) {
 	stmt := &ast.LetStatement{Token: p.curToken}
 
 	if !p.expectPeek(token.IDENT) {
@@ -83,12 +81,24 @@ func (p *Parser) parseLetStatement() (ast.Statement, *ParsingError) {
 		return nil, p.createPeekError("Assign operator expected")
 	}
 
+	return stmt, nil
+}
+
+func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
+	stmt := &ast.ReturnStatement{Token: p.curToken}
+
+	p.nextToken()
+
 	// TODO: Value is not stored
 	for !p.curTokenIs(token.NEWLINE) && !p.curTokenIs(token.EOF) {
 		p.nextToken()
 	}
 
-	return stmt, nil
+	return stmt
+}
+
+func (p *Parser) createPeekError(msg string) *ParsingError {
+	return &ParsingError{msg, p.peekToken}
 }
 
 // Peeks next token if it matches the supplied type and returns true
