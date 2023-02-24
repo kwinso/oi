@@ -60,6 +60,7 @@ func (p *Parser) parseStatement() (ast.Statement, *ParsingError) {
 	switch p.curToken.Type {
 	case token.LET:
 		return p.parseLetStatement()
+	// TODO: Return statement should not appear outside of function body
 	case token.RETURN:
 		return p.parseReturnStatement(), nil
 	default:
