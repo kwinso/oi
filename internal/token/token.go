@@ -19,6 +19,7 @@ const (
 
 	COMMA
 	DOT
+	SEMICOLON
 	LPAREN
 	RPAREN
 	LBRACE
@@ -66,10 +67,8 @@ var keywords = map[string]TokenType{
 	"false":  FALSE,
 	"and":    AND,
 	"or":     OR,
-	//"@":   PIPE_CTX,
 }
 
-// TODO: Add track of lines and pos
 type Token struct {
 	Type    TokenType
 	Literal string

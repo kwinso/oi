@@ -67,6 +67,7 @@ func (p *Parser) parseStatement() (ast.Statement, *ParsingError) {
 	}
 }
 
+// TODO: Allow not setting values
 func (p *Parser) parseLetStatement() (*ast.LetStatement, *ParsingError) {
 	stmt := &ast.LetStatement{Token: p.curToken}
 
@@ -76,7 +77,6 @@ func (p *Parser) parseLetStatement() (*ast.LetStatement, *ParsingError) {
 
 	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 
-	// TODO: Allow empty values
 	if !p.expectPeek(token.ASSIGN) {
 		return nil, p.createPeekError("Assign operator expected")
 	}
