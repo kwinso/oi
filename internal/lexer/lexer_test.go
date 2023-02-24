@@ -8,7 +8,7 @@ import (
 
 func TestLexer(t *testing.T) {
 	l := New(`let fn true false return if else @fn @fnot
-hello hello_123 _name_
+hello hello_123 _name_ a.b
 123 123.01 1_000 10_000.12
 == != <= >= < >
 ! and or 
@@ -35,6 +35,9 @@ hello hello_123 _name_
 		{token.IDENT, "hello"},
 		{token.IDENT, "hello_123"},
 		{token.IDENT, "_name_"},
+		{token.IDENT, "a"},
+		{token.DOT, "."},
+		{token.IDENT, "b"},
 		{token.NEWLINE, "\n"},
 
 		{token.INT, "123"},

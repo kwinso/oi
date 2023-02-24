@@ -16,6 +16,7 @@ const (
 	STRING
 
 	COMMA
+	DOT
 	LPAREN
 	RPAREN
 	LBRACE

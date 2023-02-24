@@ -28,6 +28,19 @@ func New(input string) *Lexer {
 	return l
 }
 
+// Tokens that appear as single character
+var singleTokens = map[byte]token.TokenType{
+	'+': token.PLUS,
+	'/': token.DIVIDE,
+	',': token.COMMA,
+	'{': token.LBRACE,
+	'}': token.RBRACE,
+	'(': token.LPAREN,
+	')': token.RPAREN,
+	'.': token.DOT,
+}
+
+// Tokens that change their type if appeared next to another character
 var doubleTokens = map[byte]struct {
 	next   byte
 	single token.TokenType
@@ -39,16 +52,6 @@ var doubleTokens = map[byte]struct {
 	'<': {'=', token.LT, token.LTE},
 	'*': {'*', token.MULTIPLY, token.POWER},
 	'-': {'>', token.MINUS, token.PIPE_OP},
-}
-
-var singleTokens = map[byte]token.TokenType{
-	'+': token.PLUS,
-	'/': token.DIVIDE,
-	',': token.COMMA,
-	'{': token.LBRACE,
-	'}': token.RBRACE,
-	'(': token.LPAREN,
-	')': token.RPAREN,
 }
 
 // NextToken Parses next token in the input string
@@ -66,19 +69,22 @@ func (l *Lexer) NextToken() token.Token {
 	case '@':
 		tok = l.createToken(token.PIPE_CTX, "@")
 		lastPos := l.pos
+		// Check if next token is a fn keyword
 		if l.peekNext() == 'f' {
 			l.readNext()
 			if l.readIdentifier() == "fn" {
 				tok.Type = token.PIPE_FN
 				tok.Literal = "@fn"
-			} else {
-				l.pos = lastPos
-				l.readPos = lastPos + 1
+				break
 			}
+
+			l.pos = lastPos
+			l.readPos = lastPos + 1
 		}
 	case 0:
 		tok = l.createToken(token.EOF, "")
 	default:
+		// This cases return because they search until next invalid character. When it encounters, it's under the l.pos
 		if isStartingIdentChar(l.ch) {
 			tok = l.createToken(token.IDENT, "")
 			tok.Literal = l.readIdentifier()
@@ -97,12 +103,15 @@ func (l *Lexer) NextToken() token.Token {
 			} else {
 				tok = l.createToken(v.single, string(l.ch))
 			}
-		} else if v, ok := singleTokens[l.ch]; ok {
-			tok = l.createToken(v, string(l.ch))
-		} else {
-			tok = l.createToken(token.ILLEGAL, string(l.ch))
-			tok.Issue = "unexpected character"
+			break
 		}
+		if v, ok := singleTokens[l.ch]; ok {
+			tok = l.createToken(v, string(l.ch))
+			break
+		}
+
+		tok = l.createToken(token.ILLEGAL, string(l.ch))
+		tok.Issue = "unexpected character"
 	}
 
 	// Prepare for the next token
