@@ -60,17 +60,21 @@ func (l *Lexer) NextToken() token.Token {
 	switch l.ch {
 	case '\n':
 		tok = l.createToken(token.NEWLINE, "\n")
+		// Need to add one to properly determine column for tokens
 		l.lastNewlinePos = l.pos + 1
 		l.curLine += 1
 	case '@':
-		next := string(l.peekNext())
-		next += string(l.peekAt(l.readPos + 1))
-
-		if next == "fn" {
-			l.skipChars(2)
-			tok = l.createToken(token.PIPE_FN, "@fn")
-		} else {
-			tok = l.createToken(token.PIPE_CTX, "@")
+		tok = l.createToken(token.PIPE_CTX, "@")
+		lastPos := l.pos
+		if l.peekNext() == 'f' {
+			l.readNext()
+			if l.readIdentifier() == "fn" {
+				tok.Type = token.PIPE_FN
+				tok.Literal = "@fn"
+			} else {
+				l.pos = lastPos
+				l.readPos = lastPos + 1
+			}
 		}
 	case 0:
 		tok = l.createToken(token.EOF, "")
@@ -106,6 +110,7 @@ func (l *Lexer) NextToken() token.Token {
 	return tok
 }
 
+// Creates token with position of cursor
 func (l *Lexer) createToken(t token.TokenType, lit string) token.Token {
 	return token.Token{Type: t, Literal: lit, Line: l.curLine, Col: l.pos - l.lastNewlinePos}
 }

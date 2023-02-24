@@ -7,7 +7,7 @@ import (
 )
 
 func TestLexer(t *testing.T) {
-	l := New(`let fn true false return if else @fn @func
+	l := New(`let fn true false return if else @fn @fnot
 hello hello_123 _name_
 123 123.01 1_000 10_000.12
 == != <= >= < >
@@ -29,7 +29,7 @@ hello hello_123 _name_
 		{token.ELSE, "else"},
 		{token.PIPE_FN, "@fn"},
 		{token.PIPE_CTX, "@"},
-		{token.IDENT, "func"},
+		{token.IDENT, "fnot"},
 		{token.NEWLINE, "\n"},
 
 		{token.IDENT, "hello"},
