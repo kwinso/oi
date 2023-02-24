@@ -1,9 +1,12 @@
 package ast
 
-import "oilang/internal/token"
+import (
+	"oilang/internal/token"
+)
 
 type Node interface {
 	TokenLiteral() string
+	String() string
 }
 
 // Statement is a type of node that does not return value, but just declares something (like let statement)
@@ -31,7 +34,25 @@ type ExpressionStatement struct {
 	Expression Expression
 }
 
+func (es *ExpressionStatement) String() string {
+	if es.Expression != nil {
+		return es.Expression.String()
+	}
+
+	return ""
+}
+
 // Program is represents sequence of parsed statements that create a program
 type Program struct {
 	Statements []Statement
+}
+
+func (p *Program) String() string {
+	var out = ""
+
+	for _, s := range p.Statements {
+		out += s.String()
+	}
+
+	return out
 }

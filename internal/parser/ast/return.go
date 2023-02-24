@@ -17,3 +17,14 @@ type ReturnStatement struct {
 
 func (*ReturnStatement) statementNode()          {}
 func (rs *ReturnStatement) TokenLiteral() string { return rs.Token.Literal }
+func (rs *ReturnStatement) String() string {
+	out := "return"
+
+	if rs.Value != nil {
+		out += " " + rs.Value.String()
+	}
+
+	out += ";"
+
+	return out
+}
