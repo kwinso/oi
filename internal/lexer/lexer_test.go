@@ -1,8 +1,8 @@
 package lexer
 
 import (
+	"github.com/stretchr/testify/assert"
 	"oilang/internal/token"
-	"reflect"
 	"testing"
 )
 
@@ -79,17 +79,11 @@ hello hello_123 _name_ a.b
 		{token.PIPE_OP, "->"},
 	}
 
-	for i, expected := range tests {
+	for _, expected := range tests {
 		tok := l.NextToken()
 
-		if tok.Type != expected.Type {
-			t.Fatalf("Test [%d] didn't match: Wrong token type. Expected=%q, but got=%q",
-				i, expected.Type.String(), tok.Type.String())
-		}
-		if tok.Literal != expected.Literal {
-			t.Fatalf("Test [%d] didn't match: Wrong wrong literal value. Expected=%q, but got=%q",
-				i, expected.Type.String(), tok.Type.String())
-		}
+		assert.Equalf(t, expected.Type, tok.Type, "Token types did not match. Expected %s, got %s", expected.Type, tok.Type)
+		assert.Equal(t, expected.Literal, tok.Literal, "Token literals did not match")
 	}
 }
 
@@ -111,11 +105,9 @@ func TestInvalid(t *testing.T) {
 		{token.ILLEGAL, ".", 2, 9, "unexpected fraction delimiter"},
 	}
 
-	for i, expected := range tests {
+	for _, expected := range tests {
 		tok := l.NextToken()
 
-		if !reflect.DeepEqual(tok, expected) {
-			t.Fatalf("Test [%d] didn't match. Got %v instead of %v", i, tok, expected)
-		}
+		assert.Equalf(t, expected, tok, "Tokens did not match. Expected %q, got %q", expected, tok)
 	}
 }

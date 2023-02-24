@@ -1,5 +1,7 @@
 package token
 
+import "fmt"
+
 //go:generate stringer -type=TokenType
 type TokenType int
 
@@ -74,6 +76,10 @@ type Token struct {
 	Line    int
 	Col     int
 	Issue   string
+}
+
+func (t Token) String() string {
+	return fmt.Sprintf("[%v:%v] %s %v", t.Line, t.Col, t.Type, t.Literal)
 }
 
 // LookupTokenType Matches supplied string with the possible keywords and returns TokenType if matched, and IDENT if not
