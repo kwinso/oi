@@ -81,6 +81,11 @@ func (p *Parser) parseLetStatement() (*ast.LetStatement, *ParsingError) {
 		return nil, p.createPeekError("Assign operator expected")
 	}
 
+	// TODO: Value is not stored
+	for !p.curTokenIs(token.NEWLINE) && !p.curTokenIs(token.EOF) && !p.curTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
 	return stmt, nil
 }
 
