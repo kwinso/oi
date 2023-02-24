@@ -11,7 +11,7 @@ func TestLexer(t *testing.T) {
 hello hello_123 _name_ a.b
 123 123.01 1_000 10_000.12
 == != <= >= < >
-! and or 
+! and or;
 =+-*/**
 (){}
 ->
@@ -60,6 +60,7 @@ hello hello_123 _name_ a.b
 		{token.NOT, "!"},
 		{token.AND, "and"},
 		{token.OR, "or"},
+		{token.SEMICOLON, ";"},
 		{token.NEWLINE, "\n"},
 
 		{token.ASSIGN, "="},

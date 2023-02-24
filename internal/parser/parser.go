@@ -90,7 +90,7 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	p.nextToken()
 
 	// TODO: Value is not stored
-	for !p.curTokenIs(token.NEWLINE) && !p.curTokenIs(token.EOF) {
+	for !p.curTokenIs(token.NEWLINE) && !p.curTokenIs(token.EOF) && !p.curTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
 

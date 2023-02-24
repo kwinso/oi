@@ -33,7 +33,7 @@ let z = 10_123.12`
 }
 
 func TestInvalidStatements(t *testing.T) {
-	tests := []string{"let x 5", "let = 10", "let 10_123.12"}
+	tests := []string{"let x 5", "let = 10;", "let 10_123.12"}
 
 	for _, input := range tests {
 		l := lexer.New(input)
@@ -47,7 +47,7 @@ func TestInvalidStatements(t *testing.T) {
 func TestReturnStatements(t *testing.T) {
 	input := `
 return 0
-return var
+return var;
 return 12.10`
 
 	l := lexer.New(input)

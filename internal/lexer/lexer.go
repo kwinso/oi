@@ -38,6 +38,7 @@ var singleTokens = map[byte]token.TokenType{
 	'(': token.LPAREN,
 	')': token.RPAREN,
 	'.': token.DOT,
+	';': token.SEMICOLON,
 }
 
 // Tokens that change their type if appeared next to another character
