@@ -10,10 +10,9 @@ type LetStatement struct {
 	Value Expression
 }
 
-func (*LetStatement) statementNode()          {}
-func (ls *LetStatement) TokenLiteral() string { return ls.Token.Literal }
+func (*LetStatement) statementNode() {}
 func (ls *LetStatement) String() string {
-	var out = ls.TokenLiteral() + " " + ls.Name.String()
+	var out = ls.Token.Literal + " " + ls.Name.String()
 
 	if ls.Value != nil {
 		out += " = " + ls.Value.String()

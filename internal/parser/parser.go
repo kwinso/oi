@@ -1,8 +1,9 @@
 package parser
 
 import (
+	"errors"
+	"oilang/internal/ast"
 	"oilang/internal/lexer"
-	"oilang/internal/parser/ast"
 	"oilang/internal/token"
 )
 
@@ -11,6 +12,25 @@ type ParsingError struct {
 	Token   token.Token
 }
 
+// Operator precedence levels
+const (
+	LOWEST = iota
+	EQUALS
+	COMPARISON
+	SUM
+	PRODUCT
+	PREFIX
+	CALL
+)
+
+// Generic function for parsing expressions for different token positions
+type (
+	// Parsing when token is encountered in prefix position(e.g. -, not, literals and identifiers)
+	prefixParseFn func() (ast.Expression, error)
+	// Parsing when token it's encountered in binary position (e.g. 5 + 5)
+	infixParseFn func(ast.Expression) (ast.Expression, error)
+)
+
 type Parser struct {
 	l *lexer.Lexer
 
@@ -18,17 +38,37 @@ type Parser struct {
 
 	curToken  token.Token
 	peekToken token.Token
+
+	prefixParsers map[token.TokenType]prefixParseFn
+	infixParsers  map[token.TokenType]infixParseFn
 }
 
 // New Creates token parser based on lexer
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l}
+	p.setupParsers()
 
 	// Set both current and peek tokens by reading twice
 	p.nextToken()
 	p.nextToken()
 
 	return p
+}
+
+// All parser functions are located in the separate files
+func (p *Parser) setupParsers() {
+	p.prefixParsers = make(map[token.TokenType]prefixParseFn)
+	p.prefixParsers[token.IDENT] = p.parseIdentifier
+	p.prefixParsers[token.INT] = p.parseInt
+	p.prefixParsers[token.FLOAT] = p.parseFloat
+}
+
+func (p *Parser) registerPrefix(token token.TokenType, fn prefixParseFn) {
+	p.prefixParsers[token] = fn
+}
+
+func (p *Parser) registerInfix(token token.TokenType, fn infixParseFn) {
+	p.infixParsers[token] = fn
 }
 
 func (p *Parser) nextToken() {
@@ -64,8 +104,12 @@ func (p *Parser) parseStatement() (ast.Statement, *ParsingError) {
 	case token.RETURN:
 		return p.parseReturnStatement(), nil
 	default:
-		return nil, nil
+		if !p.isEndOfStatementToken(p.curToken) {
+			return p.parseExpressionStatement()
+		}
 	}
+
+	return nil, nil
 }
 
 // TODO: Allow not setting values
@@ -83,7 +127,7 @@ func (p *Parser) parseLetStatement() (*ast.LetStatement, *ParsingError) {
 	}
 
 	// TODO: Value is not stored
-	for !p.curTokenIs(token.NEWLINE) && !p.curTokenIs(token.EOF) && !p.curTokenIs(token.SEMICOLON) {
+	for !p.isEndOfStatementToken(p.curToken) {
 		p.nextToken()
 	}
 
@@ -96,11 +140,37 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	p.nextToken()
 
 	// TODO: Value is not stored
-	for !p.curTokenIs(token.NEWLINE) && !p.curTokenIs(token.EOF) && !p.curTokenIs(token.SEMICOLON) {
+	for !p.isEndOfStatementToken(p.curToken) {
 		p.nextToken()
 	}
 
 	return stmt
+}
+
+// TODO:
+func (p *Parser) parseExpressionStatement() (*ast.ExpressionStatement, *ParsingError) {
+	stmt := &ast.ExpressionStatement{Token: p.curToken}
+
+	exp, err := p.parseExpression(LOWEST)
+	if err != nil {
+		return nil, &ParsingError{Token: p.curToken, Message: err.Error()}
+	}
+	stmt.Expression = exp
+
+	if p.isEndOfStatementToken(p.peekToken) {
+		p.nextToken()
+	}
+
+	return stmt, nil
+}
+
+func (p *Parser) parseExpression(precedence int) (ast.Expression, error) {
+	prefix := p.prefixParsers[p.curToken.Type]
+	if prefix == nil {
+		return nil, errors.New("cannot parse this token")
+	}
+
+	return prefix()
 }
 
 func (p *Parser) createPeekError(msg string) *ParsingError {
@@ -115,6 +185,10 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 	}
 
 	return false
+}
+
+func (p *Parser) isEndOfStatementToken(tok token.Token) bool {
+	return tok.Type == token.SEMICOLON || tok.Type == token.EOF || tok.Type == token.NEWLINE
 }
 
 func (p *Parser) curTokenIs(t token.TokenType) bool {

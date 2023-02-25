@@ -5,7 +5,6 @@ import (
 )
 
 type Node interface {
-	TokenLiteral() string
 	String() string
 }
 
@@ -34,6 +33,7 @@ type ExpressionStatement struct {
 	Expression Expression
 }
 
+func (*ExpressionStatement) statementNode() {}
 func (es *ExpressionStatement) String() string {
 	if es.Expression != nil {
 		return es.Expression.String()

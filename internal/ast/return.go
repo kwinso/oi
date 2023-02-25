@@ -15,8 +15,7 @@ type ReturnStatement struct {
 	Value Expression
 }
 
-func (*ReturnStatement) statementNode()          {}
-func (rs *ReturnStatement) TokenLiteral() string { return rs.Token.Literal }
+func (*ReturnStatement) statementNode() {}
 func (rs *ReturnStatement) String() string {
 	out := "return"
 
