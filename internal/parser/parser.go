@@ -24,7 +24,7 @@ const (
 	COMPARISON
 	SUM
 	PRODUCT
-	PREFIX
+	UNARY
 	EXP
 	CALL
 )
@@ -108,8 +108,8 @@ func (p *Parser) setupParsers() {
 	p.registerPrefixParser(token.IDENT, p.parseIdentifier)
 	p.registerPrefixParser(token.INT, p.parseInt)
 	p.registerPrefixParser(token.FLOAT, p.parseFloat)
-	p.registerPrefixParser(token.NOT, p.parsePrefixExpression)
-	p.registerPrefixParser(token.MINUS, p.parsePrefixExpression)
+	p.registerPrefixParser(token.NOT, p.parsePrefixFn(NOT))
+	p.registerPrefixParser(token.MINUS, p.parsePrefixFn(UNARY))
 
 	p.infixParsers = make(map[token.TokenType]infixParseFn)
 	for k := range precedences {
