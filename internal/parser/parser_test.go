@@ -221,3 +221,24 @@ func TestPrecedence(t *testing.T) {
 		assert.Equal(t, test.expected, p.String())
 	}
 }
+
+func TestBools(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"false", "false"},
+		{"true", "true"},
+		{"foobar != true", "(foobar != true)"},
+		{"let a = false", "let a = false;"},
+	}
+
+	for _, test := range tests {
+		l := lexer.New(test.input)
+		p, err := New(l).Parse()
+
+		testValidProgram(t, p, err, 1)
+
+		assert.Equal(t, test.expected, p.String())
+	}
+}

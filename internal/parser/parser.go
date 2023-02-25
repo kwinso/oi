@@ -106,10 +106,15 @@ func (p *Parser) Parse() (*ast.Program, *ParsingError) {
 func (p *Parser) setupParsers() {
 	p.prefixParsers = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefixParser(token.IDENT, p.parseIdentifier)
+
+	p.registerPrefixParser(token.TRUE, p.parseBool)
+	p.registerPrefixParser(token.FALSE, p.parseBool)
+
 	p.registerPrefixParser(token.INT, p.parseInt)
 	p.registerPrefixParser(token.FLOAT, p.parseFloat)
-	p.registerPrefixParser(token.NOT, p.parsePrefixFn(NOT))
-	p.registerPrefixParser(token.MINUS, p.parsePrefixFn(UNARY))
+
+	p.registerPrefixParser(token.NOT, p.createPrefixParserWithPrecedence(NOT))
+	p.registerPrefixParser(token.MINUS, p.createPrefixParserWithPrecedence(UNARY))
 
 	p.infixParsers = make(map[token.TokenType]infixParseFn)
 	for k := range precedences {
