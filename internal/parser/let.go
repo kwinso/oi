@@ -22,7 +22,16 @@ func (p *Parser) parseLetStatement() (*ast.LetStatement, *ParsingError) {
 		return nil, p.createPeekError("Assign operator expected")
 	}
 
-	// TODO: Value is not stored
+	p.nextToken()
+
+	val, err := p.parseExpression(LOWEST)
+
+	if err != nil {
+		return nil, &ParsingError{err.Error(), p.curToken}
+	}
+
+	stmt.Value = val
+
 	for !p.isEndOfStatementToken(p.curToken) {
 		p.nextToken()
 	}

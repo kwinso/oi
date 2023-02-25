@@ -24,7 +24,7 @@ func (p *Parser) parseExpressionStatement() (*ast.ExpressionStatement, *ParsingE
 func (p *Parser) parseExpression(precedence int) (ast.Expression, error) {
 	prefix, ok := p.prefixParsers[p.curToken.Type]
 	if !ok {
-		return nil, fmt.Errorf("cannot parse %s token", p.curToken.Type)
+		return nil, fmt.Errorf("unexpected %s token", p.curToken.Type)
 	}
 
 	leftExp, err := prefix()
