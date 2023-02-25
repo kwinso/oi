@@ -6,10 +6,10 @@ import (
 	"github.com/fatih/color"
 	"io"
 	"oilang/internal/lexer"
-	"oilang/internal/token"
+	"oilang/internal/parser"
 )
 
-const PROMPT = "oi: "
+const PROMPT = "@oi: "
 
 // TODO:
 // - Allow to use newlines
@@ -28,9 +28,13 @@ func Start(in io.Reader, out io.Writer) {
 		}
 
 		l := lexer.New(scanner.Text())
+		ast, err := parser.New(l).Parse()
 
-		for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
-			_, _ = fmt.Fprintf(out, "%v: %v\n", tok.Type, tok.Literal)
+		if err != nil {
+			fmt.Printf("%v\n", color.RedString(err.Message))
+			continue
 		}
+
+		fmt.Println(ast.String())
 	}
 }
