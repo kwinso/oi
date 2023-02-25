@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"oilang/internal/ast"
 )
 
@@ -10,7 +9,7 @@ func (p *Parser) parseExpressionStatement() (*ast.ExpressionStatement, *ParsingE
 
 	exp, err := p.parseExpression(LOWEST)
 	if err != nil {
-		return nil, &ParsingError{Token: p.curToken, Message: err.Error()}
+		return nil, err
 	}
 	stmt.Expression = exp
 
@@ -21,10 +20,10 @@ func (p *Parser) parseExpressionStatement() (*ast.ExpressionStatement, *ParsingE
 	return stmt, nil
 }
 
-func (p *Parser) parseExpression(precedence int) (ast.Expression, error) {
+func (p *Parser) parseExpression(precedence int) (ast.Expression, *ParsingError) {
 	prefix, ok := p.prefixParsers[p.curToken.Type]
 	if !ok {
-		return nil, fmt.Errorf("unexpected %s token", p.curToken.Type)
+		return nil, &ParsingError{"unexpected token", p.curToken}
 	}
 
 	leftExp, err := prefix()

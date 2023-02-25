@@ -27,7 +27,7 @@ func (p *Parser) parseLetStatement() (*ast.LetStatement, *ParsingError) {
 	val, err := p.parseExpression(LOWEST)
 
 	if err != nil {
-		return nil, &ParsingError{err.Error(), p.curToken}
+		return nil, err
 	}
 
 	stmt.Value = val

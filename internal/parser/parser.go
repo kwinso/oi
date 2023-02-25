@@ -6,6 +6,9 @@ import (
 	"oilang/internal/token"
 )
 
+// TODO: Implement converting to string with errored input line
+
+// ParsingError represents an error that occuring during parsing, as well as token that has caused an error
 type ParsingError struct {
 	Message string
 	Token   token.Token
@@ -26,7 +29,7 @@ const (
 	CALL
 )
 
-// Maps each token that could appear in infix position to it's precedence level
+// Maps each token that could appear in infix position to its precedence level
 var precedences = map[token.TokenType]int{
 	token.EQ:  EQUALS,
 	token.NEQ: EQUALS,
@@ -49,9 +52,9 @@ var precedences = map[token.TokenType]int{
 // Generic function for parsing expressions for different token positions
 type (
 	// Parsing when token is encountered in prefix position(e.g. -, not, literals and identifiers)
-	prefixParseFn func() (ast.Expression, error)
+	prefixParseFn func() (ast.Expression, *ParsingError)
 	// Parsing when token it's encountered in binary position (e.g. 5 + 5)
-	infixParseFn func(ast.Expression) (ast.Expression, error)
+	infixParseFn func(ast.Expression) (ast.Expression, *ParsingError)
 )
 
 type Parser struct {

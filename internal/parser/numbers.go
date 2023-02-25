@@ -1,18 +1,17 @@
 package parser
 
 import (
-	"errors"
 	"oilang/internal/ast"
 	"strconv"
 )
 
 // parseInt converts current token to 64-bit integer
-func (p *Parser) parseInt() (ast.Expression, error) {
+func (p *Parser) parseInt() (ast.Expression, *ParsingError) {
 	lit := &ast.IntegerLiteral{Token: p.curToken}
 
 	v, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
 	if err != nil {
-		return nil, errors.New("unable to parse integer")
+		return nil, &ParsingError{"unable to parse integer", p.curToken}
 	}
 
 	lit.Value = v
@@ -21,12 +20,12 @@ func (p *Parser) parseInt() (ast.Expression, error) {
 }
 
 // parseFloat converts current token to 64-bit float
-func (p *Parser) parseFloat() (ast.Expression, error) {
+func (p *Parser) parseFloat() (ast.Expression, *ParsingError) {
 	lit := &ast.FloatLiteral{Token: p.curToken}
 
 	v, err := strconv.ParseFloat(p.curToken.Literal, 64)
 	if err != nil {
-		return nil, errors.New("unable to parse integer")
+		return nil, &ParsingError{"unable to parse float number", p.curToken}
 	}
 
 	lit.Value = v

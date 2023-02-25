@@ -2,7 +2,7 @@ package parser
 
 import "oilang/internal/ast"
 
-func (p *Parser) parsePrefixExpression() (ast.Expression, error) {
+func (p *Parser) parsePrefixExpression() (ast.Expression, *ParsingError) {
 	exp := &ast.PrefixExpression{Token: p.curToken}
 
 	p.nextToken()

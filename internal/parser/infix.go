@@ -2,7 +2,7 @@ package parser
 
 import "oilang/internal/ast"
 
-func (p *Parser) parseInfixExpression(left ast.Expression) (ast.Expression, error) {
+func (p *Parser) parseInfixExpression(left ast.Expression) (ast.Expression, *ParsingError) {
 	exp := &ast.InfixExpression{Token: p.curToken, Left: left}
 	precedence := p.curPrecedence()
 
