@@ -12,13 +12,13 @@ import (
 func (p *Parser) parseLetStatement() (*ast.LetStatement, *ParsingError) {
 	stmt := &ast.LetStatement{Token: p.curToken}
 
-	if !p.expectPeek(token.IDENT) {
+	if !p.tryPeek(token.IDENT) {
 		return nil, p.createPeekError("Identifier expected")
 	}
 
 	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 
-	if !p.expectPeek(token.ASSIGN) {
+	if !p.tryPeek(token.ASSIGN) {
 		return nil, p.createPeekError("Assign operator expected")
 	}
 

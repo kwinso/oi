@@ -202,6 +202,7 @@ func TestPrecedence(t *testing.T) {
 		input    string
 		expected string
 	}{
+		// Automatic precedence
 		{"-a * b", "((- a) * b)"},
 		{"a + -b", "(a + (- b))"},
 		{"not -a", "(not (- a))"},
@@ -210,6 +211,13 @@ func TestPrecedence(t *testing.T) {
 		{"4 <= 5 != 5 >= 4", "((4 <= 5) != (5 >= 4))"},
 		{"a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"},
 		{"3 + 4 * 5 == 3 * 1 + 4 * 5 or a == b", "(((3 + (4 * 5)) == ((3 * 1) + (4 * 5))) or (a == b))"},
+
+		// Forced precedence
+		{"1 + (2 + 3) + 4", "((1 + (2 + 3)) + 4)"},
+		{"(5 + 5) * 2", "((5 + 5) * 2)"},
+		{"2 / (5 + 5)", "(2 / (5 + 5))"},
+		{"-(5 + 5)", "(- (5 + 5))"},
+		{"!(true == true)", "(! (true == true))"},
 	}
 
 	for _, test := range tests {

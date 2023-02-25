@@ -47,3 +47,19 @@ func (p *Parser) parseInfixExpression(left ast.Expression) (ast.Expression, *Par
 	exp.Right = right
 	return exp, nil
 }
+
+func (p *Parser) parseGroupedExpression() (ast.Expression, *ParsingError) {
+	p.nextToken()
+
+	// Create something like a local scope inside parentheses and reset precedence
+	exp, err := p.parseExpression(LOWEST)
+	if err != nil {
+		return nil, err
+	}
+
+	if !p.tryPeek(token.RPAREN) {
+		return nil, &ParsingError{"expected to get closing parenthesis", p.peekToken}
+	}
+
+	return exp, nil
+}

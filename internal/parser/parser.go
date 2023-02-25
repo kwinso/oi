@@ -116,6 +116,8 @@ func (p *Parser) setupParsers() {
 	p.registerPrefixParser(token.NOT, p.createPrefixParserWithPrecedence(NOT))
 	p.registerPrefixParser(token.MINUS, p.createPrefixParserWithPrecedence(UNARY))
 
+	p.registerPrefixParser(token.LPAREN, p.parseGroupedExpression)
+
 	p.infixParsers = make(map[token.TokenType]infixParseFn)
 	for k := range precedences {
 		p.registerInfixParser(k, p.parseInfixExpression)
@@ -159,7 +161,7 @@ func (p *Parser) createPeekError(msg string) *ParsingError {
 }
 
 // Peeks next token if it matches the supplied type and returns whether it matched
-func (p *Parser) expectPeek(t token.TokenType) bool {
+func (p *Parser) tryPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
 		p.nextToken()
 		return true
