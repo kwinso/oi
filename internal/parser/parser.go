@@ -15,11 +15,15 @@ type ParsingError struct {
 // Operator precedence levels
 const (
 	LOWEST = iota
+	OR
+	AND
+	NOT
 	EQUALS
 	COMPARISON
 	SUM
 	PRODUCT
 	PREFIX
+	EXP
 	CALL
 )
 
