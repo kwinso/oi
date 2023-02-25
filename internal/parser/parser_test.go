@@ -137,3 +137,33 @@ func TestFloatLiterals(t *testing.T) {
 		assert.Equal(t, expected.val, id.Value)
 	}
 }
+
+func TestPrefixOperators(t *testing.T) {
+	tests := []struct {
+		input    string
+		operator string
+		operand  interface{}
+	}{
+		{"not 123", "not", "123"},
+		{"-var", "-", "var"},
+	}
+
+	for _, test := range tests {
+		l := lexer.New(test.input)
+		p, err := New(l).Parse()
+
+		assert.Nil(t, err)
+		assert.NotNil(t, p)
+		assert.Equal(t, 1, len(p.Statements))
+
+		stmt, ok := p.Statements[0].(*ast.ExpressionStatement)
+		assert.True(t, ok, "cannot convert to ExpressionStatement")
+
+		exp, ok := stmt.Expression.(*ast.PrefixExpression)
+		assert.True(t, ok, "cannot convert to PrefixExpression")
+
+		assert.Equal(t, test.operator, exp.Operator())
+		assert.Equal(t, test.operand, exp.Operand.String())
+	}
+
+}

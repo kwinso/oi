@@ -67,6 +67,7 @@ var keywords = map[string]TokenType{
 	"false":  FALSE,
 	"and":    AND,
 	"or":     OR,
+	"not":    NOT,
 }
 
 type Token struct {

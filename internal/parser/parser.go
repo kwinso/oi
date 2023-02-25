@@ -61,6 +61,8 @@ func (p *Parser) setupParsers() {
 	p.prefixParsers[token.IDENT] = p.parseIdentifier
 	p.prefixParsers[token.INT] = p.parseInt
 	p.prefixParsers[token.FLOAT] = p.parseFloat
+	p.prefixParsers[token.NOT] = p.parsePrefixExpression
+	p.prefixParsers[token.MINUS] = p.parsePrefixExpression
 }
 
 func (p *Parser) registerPrefix(token token.TokenType, fn prefixParseFn) {
