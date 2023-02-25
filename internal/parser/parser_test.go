@@ -142,7 +142,7 @@ func TestPrefixOperators(t *testing.T) {
 	tests := []struct {
 		input    string
 		operator string
-		operand  interface{}
+		operand  string
 	}{
 		{"not 123", "not", "123"},
 		{"-var", "-", "var"},
@@ -165,5 +165,75 @@ func TestPrefixOperators(t *testing.T) {
 		assert.Equal(t, test.operator, exp.Operator())
 		assert.Equal(t, test.operand, exp.Operand.String())
 	}
+}
 
+func TestInfixOperators(t *testing.T) {
+	tests := []struct {
+		input    string
+		left     string
+		operator string
+		right    string
+	}{
+		{"1 + 1", "1", "+", "1"},
+		{"1 - 1", "1", "-", "1"},
+		{"1 * 1", "1", "*", "1"},
+		{"1/1", "1", "/", "1"},
+		{"2**2", "2", "**", "2"},
+
+		{"1>1", "1", ">", "1"},
+		{"1 < 1", "1", "<", "1"},
+		{"1 >= 1", "1", ">=", "1"},
+		{"1 <= 1", "1", "<=", "1"},
+		{"1 != 3", "1", "!=", "3"},
+		{"3 == 3", "3", "==", "3"},
+
+		{"1 or 1", "1", "or", "1"},
+		{"1 and 1", "1", "and", "1"},
+	}
+
+	for _, test := range tests {
+		l := lexer.New(test.input)
+		p, err := New(l).Parse()
+
+		assert.Nil(t, err)
+		assert.NotNil(t, p)
+		assert.Equal(t, 1, len(p.Statements))
+
+		stmt, ok := p.Statements[0].(*ast.ExpressionStatement)
+		assert.True(t, ok, "cannot convert to ExpressionStatement")
+
+		exp, ok := stmt.Expression.(*ast.InfixExpression)
+		assert.True(t, ok, "cannot convert to InfixExpression")
+
+		assert.Equal(t, test.operator, exp.Operator())
+		assert.Equal(t, test.left, exp.Left.String())
+		assert.Equal(t, test.right, exp.Right.String())
+	}
+}
+
+func TestPrecedence(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"-a * b", "((- a) * b)"},
+		{"a + -b", "(a + (- b))"},
+		{"not -a", "(not (- a))"},
+		{"5 + 2 * 10", "(5 + (2 * 10))"},
+		{"123 * 3 * 2 ** 3", "((123 * 3) * (2 ** 3))"},
+		{"4 <= 5 != 5 >= 4", "((4 <= 5) != (5 >= 4))"},
+		{"a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"},
+		{"3 + 4 * 5 == 3 * 1 + 4 * 5 or a == b", "(((3 + (4 * 5)) == ((3 * 1) + (4 * 5))) or (a == b))"},
+	}
+
+	for _, test := range tests {
+		l := lexer.New(test.input)
+		p, err := New(l).Parse()
+
+		assert.Nil(t, err)
+		assert.NotNil(t, p)
+		assert.Equal(t, 1, len(p.Statements))
+
+		assert.Equal(t, test.expected, p.String())
+	}
 }

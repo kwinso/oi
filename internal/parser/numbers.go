@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+// parseInt converts current token to 64-bit integer
 func (p *Parser) parseInt() (ast.Expression, error) {
 	lit := &ast.IntegerLiteral{Token: p.curToken}
 
@@ -19,6 +20,7 @@ func (p *Parser) parseInt() (ast.Expression, error) {
 	return lit, nil
 }
 
+// parseFloat converts current token to 64-bit float
 func (p *Parser) parseFloat() (ast.Expression, error) {
 	lit := &ast.FloatLiteral{Token: p.curToken}
 

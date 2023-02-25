@@ -7,6 +7,7 @@ func (p *Parser) parsePrefixExpression() (ast.Expression, error) {
 
 	p.nextToken()
 
+	// Parse next expression with the prefix precedence
 	v, err := p.parseExpression(PREFIX)
 	if err != nil {
 		return nil, err

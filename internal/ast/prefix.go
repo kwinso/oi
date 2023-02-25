@@ -15,5 +15,5 @@ func (pe *PrefixExpression) Operator() string {
 	return pe.Token.Literal
 }
 func (pe *PrefixExpression) String() string {
-	return fmt.Sprintf("(%s %s)", pe.Operator(), pe.Operand.String())
+	return fmt.Sprintf("(%s %s)", pe.Operator(), pe.Operand)
 }

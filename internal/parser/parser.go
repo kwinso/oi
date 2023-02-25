@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"errors"
 	"oilang/internal/ast"
 	"oilang/internal/lexer"
 	"oilang/internal/token"
@@ -26,6 +25,26 @@ const (
 	EXP
 	CALL
 )
+
+// Maps each token that could appear in infix position to it's precedence level
+var precedences = map[token.TokenType]int{
+	token.EQ:  EQUALS,
+	token.NEQ: EQUALS,
+	token.OR:  OR,
+	token.AND: AND,
+	token.NOT: NOT,
+
+	token.LT:  COMPARISON,
+	token.GT:  COMPARISON,
+	token.LTE: COMPARISON,
+	token.GTE: COMPARISON,
+
+	token.PLUS:     SUM,
+	token.MINUS:    SUM,
+	token.DIVIDE:   PRODUCT,
+	token.MULTIPLY: PRODUCT,
+	token.POWER:    EXP,
+}
 
 // Generic function for parsing expressions for different token positions
 type (
@@ -59,35 +78,11 @@ func New(l *lexer.Lexer) *Parser {
 	return p
 }
 
-// All parser functions are located in the separate files
-func (p *Parser) setupParsers() {
-	p.prefixParsers = make(map[token.TokenType]prefixParseFn)
-	p.prefixParsers[token.IDENT] = p.parseIdentifier
-	p.prefixParsers[token.INT] = p.parseInt
-	p.prefixParsers[token.FLOAT] = p.parseFloat
-	p.prefixParsers[token.NOT] = p.parsePrefixExpression
-	p.prefixParsers[token.MINUS] = p.parsePrefixExpression
-}
-
-func (p *Parser) registerPrefix(token token.TokenType, fn prefixParseFn) {
-	p.prefixParsers[token] = fn
-}
-
-func (p *Parser) registerInfix(token token.TokenType, fn infixParseFn) {
-	p.infixParsers[token] = fn
-}
-
-func (p *Parser) nextToken() {
-	p.curToken = p.peekToken
-	p.peekToken = p.l.NextToken()
-}
-
-// Parse parsers tokens from lexer into AST
+// Parse Goes through lexical tokens and turns them into AST
 func (p *Parser) Parse() (*ast.Program, *ParsingError) {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 
-	// FIXME: add error handling with showing where was the error
 	for p.curToken.Type != token.EOF {
 		stmt, err := p.parseStatement()
 		if err != nil {
@@ -102,6 +97,38 @@ func (p *Parser) Parse() (*ast.Program, *ParsingError) {
 	return program, nil
 }
 
+// All parser functions are located in the separate files
+//
+// Note: all parsing function should stop advancing tokens on the last token that belongs to a given expression
+func (p *Parser) setupParsers() {
+	p.prefixParsers = make(map[token.TokenType]prefixParseFn)
+	p.registerPrefixParser(token.IDENT, p.parseIdentifier)
+	p.registerPrefixParser(token.INT, p.parseInt)
+	p.registerPrefixParser(token.FLOAT, p.parseFloat)
+	p.registerPrefixParser(token.NOT, p.parsePrefixExpression)
+	p.registerPrefixParser(token.MINUS, p.parsePrefixExpression)
+
+	p.infixParsers = make(map[token.TokenType]infixParseFn)
+	for k := range precedences {
+		p.registerInfixParser(k, p.parseInfixExpression)
+	}
+}
+
+func (p *Parser) registerPrefixParser(tokenType token.TokenType, fn prefixParseFn) {
+	p.prefixParsers[tokenType] = fn
+}
+
+func (p *Parser) registerInfixParser(tokenType token.TokenType, fn infixParseFn) {
+	p.infixParsers[tokenType] = fn
+}
+
+// Steps one token forward, advancing current and peek tokens
+func (p *Parser) nextToken() {
+	p.curToken = p.peekToken
+	p.peekToken = p.l.NextToken()
+}
+
+// Decides which function to call to turn given token into program statement
 func (p *Parser) parseStatement() (ast.Statement, *ParsingError) {
 	switch p.curToken.Type {
 	case token.LET:
@@ -109,81 +136,21 @@ func (p *Parser) parseStatement() (ast.Statement, *ParsingError) {
 	// TODO: Return statement should not appear outside of function body
 	case token.RETURN:
 		return p.parseReturnStatement(), nil
+	case token.NEWLINE, token.EOF:
+		break
 	default:
-		if !p.isEndOfStatementToken(p.curToken) {
-			return p.parseExpressionStatement()
-		}
+		return p.parseExpressionStatement()
 	}
 
 	return nil, nil
 }
 
-// TODO: Allow not setting values
-func (p *Parser) parseLetStatement() (*ast.LetStatement, *ParsingError) {
-	stmt := &ast.LetStatement{Token: p.curToken}
-
-	if !p.expectPeek(token.IDENT) {
-		return nil, p.createPeekError("Identifier expected")
-	}
-
-	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
-
-	if !p.expectPeek(token.ASSIGN) {
-		return nil, p.createPeekError("Assign operator expected")
-	}
-
-	// TODO: Value is not stored
-	for !p.isEndOfStatementToken(p.curToken) {
-		p.nextToken()
-	}
-
-	return stmt, nil
-}
-
-func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
-	stmt := &ast.ReturnStatement{Token: p.curToken}
-
-	p.nextToken()
-
-	// TODO: Value is not stored
-	for !p.isEndOfStatementToken(p.curToken) {
-		p.nextToken()
-	}
-
-	return stmt
-}
-
-// TODO:
-func (p *Parser) parseExpressionStatement() (*ast.ExpressionStatement, *ParsingError) {
-	stmt := &ast.ExpressionStatement{Token: p.curToken}
-
-	exp, err := p.parseExpression(LOWEST)
-	if err != nil {
-		return nil, &ParsingError{Token: p.curToken, Message: err.Error()}
-	}
-	stmt.Expression = exp
-
-	if p.isEndOfStatementToken(p.peekToken) {
-		p.nextToken()
-	}
-
-	return stmt, nil
-}
-
-func (p *Parser) parseExpression(precedence int) (ast.Expression, error) {
-	prefix := p.prefixParsers[p.curToken.Type]
-	if prefix == nil {
-		return nil, errors.New("cannot parse this token")
-	}
-
-	return prefix()
-}
-
+// Creates and error for the peek token
 func (p *Parser) createPeekError(msg string) *ParsingError {
 	return &ParsingError{msg, p.peekToken}
 }
 
-// Peeks next token if it matches the supplied type and returns true
+// Peeks next token if it matches the supplied type and returns whether it matched
 func (p *Parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
 		p.nextToken()
@@ -193,6 +160,26 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 	return false
 }
 
+// Returns precedence of the supplied token
+func (p *Parser) tokPrecedence(tok token.Token) int {
+	if p, ok := precedences[tok.Type]; ok {
+		return p
+	}
+
+	return LOWEST
+}
+
+// Returns precedence of the peek token
+func (p *Parser) peekPrecedence() int {
+	return p.tokPrecedence(p.peekToken)
+}
+
+// Returns precedence of the current token
+func (p *Parser) curPrecedence() int {
+	return p.tokPrecedence(p.curToken)
+}
+
+// Is token considered as an end of statement
 func (p *Parser) isEndOfStatementToken(tok token.Token) bool {
 	return tok.Type == token.SEMICOLON || tok.Type == token.EOF || tok.Type == token.NEWLINE
 }
