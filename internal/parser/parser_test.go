@@ -4,8 +4,22 @@ import (
 	"github.com/stretchr/testify/assert"
 	"oilang/internal/ast"
 	"oilang/internal/lexer"
+	"reflect"
 	"testing"
 )
+
+func testValidProgram(t *testing.T, program *ast.Program, err *ParsingError, amount int) {
+	assert.Nil(t, err)
+	assert.NotNil(t, program)
+	assert.Len(t, program.Statements, amount)
+}
+
+func getAsInstanceOf[T any](t *testing.T, val any) *T {
+	stmt, ok := val.(*T)
+	assert.Truef(t, ok, "cannot be converted %v", reflect.TypeOf(*new(T)))
+
+	return stmt
+}
 
 func TestLetStatements(t *testing.T) {
 	input := `
@@ -16,19 +30,15 @@ let z = 10_123.12`
 	l := lexer.New(input)
 	p, err := New(l).Parse()
 
-	assert.Nil(t, err)
-	assert.NotNil(t, p, "Returned program is nil")
-	assert.Equal(t, 3, len(p.Statements), "Did not get expected 3 statements")
+	testValidProgram(t, p, err, 3)
 
 	tests := []string{"x", "y", "z"}
 
 	for i, expected := range tests {
-		stmt, ok := p.Statements[i].(*ast.LetStatement)
-
-		assert.True(t, ok, "cannot convert to LetStatement")
-		assert.Equal(t, "let", stmt.Token.Literal)
-		assert.Equal(t, expected, stmt.Name.Value)
-		assert.Equal(t, expected, stmt.Name.Token.Literal)
+		let := getAsInstanceOf[ast.LetStatement](t, p.Statements[i])
+		assert.Equal(t, "let", let.Token.Literal)
+		assert.Equal(t, expected, let.Name.Value)
+		assert.Equal(t, expected, let.Name.Token.Literal)
 	}
 }
 
@@ -53,9 +63,7 @@ return 12.10`
 	l := lexer.New(input)
 	p, err := New(l).Parse()
 
-	assert.Nil(t, err)
-	assert.NotNil(t, p, "Returned program is nil")
-	assert.Equal(t, 3, len(p.Statements), "Did not get expected 3 statements")
+	testValidProgram(t, p, err, 3)
 }
 
 func TestIdentifierExpression(t *testing.T) {
@@ -63,15 +71,11 @@ func TestIdentifierExpression(t *testing.T) {
 	l := lexer.New(input)
 	p, err := New(l).Parse()
 
-	assert.Nil(t, err)
-	assert.NotNil(t, p)
-	assert.Equal(t, 1, len(p.Statements))
+	testValidProgram(t, p, err, 1)
 
-	stmt, ok := p.Statements[0].(*ast.ExpressionStatement)
-	assert.True(t, ok, "Program first statement is not expression statement")
+	stmt := getAsInstanceOf[ast.ExpressionStatement](t, p.Statements[0])
+	id := getAsInstanceOf[ast.Identifier](t, stmt.Expression)
 
-	id, ok := stmt.Expression.(*ast.Identifier)
-	assert.True(t, ok, "Statement's expression is not an identifier")
 	assert.Equal(t, "var", id.Value)
 	assert.Equal(t, "var", id.Token.Literal)
 }
@@ -83,9 +87,7 @@ func TestIntegerLiterals(t *testing.T) {
 
 	l := lexer.New(input)
 	p, err := New(l).Parse()
-	assert.Nil(t, err)
-	assert.NotNil(t, p)
-	assert.Equal(t, 3, len(p.Statements))
+	testValidProgram(t, p, err, 3)
 
 	tests := []struct {
 		lit string
@@ -97,11 +99,9 @@ func TestIntegerLiterals(t *testing.T) {
 	}
 
 	for i, expected := range tests {
-		stmt, ok := p.Statements[i].(*ast.ExpressionStatement)
-		assert.True(t, ok, "cannot convert to ExpressionStatement")
+		stmt := getAsInstanceOf[ast.ExpressionStatement](t, p.Statements[i])
+		id := getAsInstanceOf[ast.IntegerLiteral](t, stmt.Expression)
 
-		id, ok := stmt.Expression.(*ast.IntegerLiteral)
-		assert.True(t, ok, "Statement's expression is not an integer literal")
 		assert.Equal(t, expected.lit, id.Token.Literal)
 		assert.Equal(t, expected.val, id.Value)
 	}
@@ -114,9 +114,7 @@ func TestFloatLiterals(t *testing.T) {
 
 	l := lexer.New(input)
 	p, err := New(l).Parse()
-	assert.Nil(t, err)
-	assert.NotNil(t, p)
-	assert.Equal(t, 3, len(p.Statements))
+	testValidProgram(t, p, err, 3)
 
 	tests := []struct {
 		lit string
@@ -128,13 +126,11 @@ func TestFloatLiterals(t *testing.T) {
 	}
 
 	for i, expected := range tests {
-		stmt, ok := p.Statements[i].(*ast.ExpressionStatement)
-		assert.True(t, ok, "cannot convert to ExpressionStatement")
+		stmt := getAsInstanceOf[ast.ExpressionStatement](t, p.Statements[i])
+		float := getAsInstanceOf[ast.FloatLiteral](t, stmt.Expression)
 
-		id, ok := stmt.Expression.(*ast.FloatLiteral)
-		assert.True(t, ok, "Statement's expression is not a float literal")
-		assert.Equal(t, expected.lit, id.Token.Literal)
-		assert.Equal(t, expected.val, id.Value)
+		assert.Equal(t, expected.lit, float.Token.Literal)
+		assert.Equal(t, expected.val, float.Value)
 	}
 }
 
@@ -152,15 +148,10 @@ func TestPrefixOperators(t *testing.T) {
 		l := lexer.New(test.input)
 		p, err := New(l).Parse()
 
-		assert.Nil(t, err)
-		assert.NotNil(t, p)
-		assert.Equal(t, 1, len(p.Statements))
+		testValidProgram(t, p, err, 1)
 
-		stmt, ok := p.Statements[0].(*ast.ExpressionStatement)
-		assert.True(t, ok, "cannot convert to ExpressionStatement")
-
-		exp, ok := stmt.Expression.(*ast.PrefixExpression)
-		assert.True(t, ok, "cannot convert to PrefixExpression")
+		stmt := getAsInstanceOf[ast.ExpressionStatement](t, p.Statements[0])
+		exp := getAsInstanceOf[ast.PrefixExpression](t, stmt.Expression)
 
 		assert.Equal(t, test.operator, exp.Operator())
 		assert.Equal(t, test.operand, exp.Operand.String())
@@ -195,15 +186,10 @@ func TestInfixOperators(t *testing.T) {
 		l := lexer.New(test.input)
 		p, err := New(l).Parse()
 
-		assert.Nil(t, err)
-		assert.NotNil(t, p)
-		assert.Equal(t, 1, len(p.Statements))
+		testValidProgram(t, p, err, 1)
 
-		stmt, ok := p.Statements[0].(*ast.ExpressionStatement)
-		assert.True(t, ok, "cannot convert to ExpressionStatement")
-
-		exp, ok := stmt.Expression.(*ast.InfixExpression)
-		assert.True(t, ok, "cannot convert to InfixExpression")
+		stmt := getAsInstanceOf[ast.ExpressionStatement](t, p.Statements[0])
+		exp := getAsInstanceOf[ast.InfixExpression](t, stmt.Expression)
 
 		assert.Equal(t, test.operator, exp.Operator())
 		assert.Equal(t, test.left, exp.Left.String())
@@ -230,9 +216,7 @@ func TestPrecedence(t *testing.T) {
 		l := lexer.New(test.input)
 		p, err := New(l).Parse()
 
-		assert.Nil(t, err)
-		assert.NotNil(t, p)
-		assert.Equal(t, 1, len(p.Statements))
+		testValidProgram(t, p, err, 1)
 
 		assert.Equal(t, test.expected, p.String())
 	}
