@@ -22,7 +22,7 @@ func TestProgram_String(t *testing.T) {
 			},
 			&ReturnStatement{
 				Token: token.Token{Type: token.RETURN, Literal: "return"},
-				Value: &Identifier{
+				ReturnValue: &Identifier{
 					Token: token.Token{Type: token.IDENT, Literal: "var"},
 					Value: "var",
 				},

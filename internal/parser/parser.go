@@ -100,6 +100,23 @@ func (p *Parser) Parse() (*ast.Program, *ParsingError) {
 	return program, nil
 }
 
+// Decides which function to call to turn given token into program statement
+func (p *Parser) parseStatement() (ast.Statement, *ParsingError) {
+	switch p.curToken.Type {
+	case token.LET:
+		return p.parseLetStatement()
+	// TODO: Return statement should not appear outside of function body
+	case token.RETURN:
+		return p.parseReturnStatement()
+	case token.NEWLINE, token.EOF:
+		break
+	default:
+		return p.parseExpressionStatement()
+	}
+
+	return nil, nil
+}
+
 // All parser functions are located in the separate files
 //
 // Note: all parsing function should stop advancing tokens on the last token that belongs to a given expression
@@ -117,6 +134,9 @@ func (p *Parser) setupParsers() {
 	p.registerPrefixParser(token.MINUS, p.createPrefixParserWithPrecedence(UNARY))
 
 	p.registerPrefixParser(token.LPAREN, p.parseGroupedExpression)
+	p.registerPrefixParser(token.IF, p.parseIfExpression)
+	p.registerPrefixParser(token.FN, p.parseFunctionLiteral)
+	p.registerPrefixParser(token.STAGE_FN, p.parseFunctionLiteral)
 
 	p.infixParsers = make(map[token.TokenType]infixParseFn)
 	for k := range precedences {
@@ -138,26 +158,13 @@ func (p *Parser) nextToken() {
 	p.peekToken = p.l.NextToken()
 }
 
-// Decides which function to call to turn given token into program statement
-func (p *Parser) parseStatement() (ast.Statement, *ParsingError) {
-	switch p.curToken.Type {
-	case token.LET:
-		return p.parseLetStatement()
-	// TODO: Return statement should not appear outside of function body
-	case token.RETURN:
-		return p.parseReturnStatement(), nil
-	case token.NEWLINE, token.EOF:
-		break
-	default:
-		return p.parseExpressionStatement()
-	}
-
-	return nil, nil
-}
-
 // Creates and error for the peek token
 func (p *Parser) createPeekError(msg string) *ParsingError {
 	return &ParsingError{msg, p.peekToken}
+}
+
+func (p *Parser) createCurrentTokenError(msg string) *ParsingError {
+	return &ParsingError{msg, p.curToken}
 }
 
 // Peeks next token if it matches the supplied type and returns whether it matched

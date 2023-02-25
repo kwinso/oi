@@ -58,7 +58,7 @@ func (p *Parser) parseGroupedExpression() (ast.Expression, *ParsingError) {
 	}
 
 	if !p.tryPeek(token.RPAREN) {
-		return nil, &ParsingError{"expected to get closing parenthesis", p.peekToken}
+		return nil, p.createPeekError("expected to get closing parenthesis")
 	}
 
 	return exp, nil

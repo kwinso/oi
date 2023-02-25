@@ -42,12 +42,12 @@ func (es *ExpressionStatement) String() string {
 	return ""
 }
 
-// Program is represents sequence of parsed statements that create a program
-type Program struct {
+// StatementCollection represents a program parsed from source code
+type StatementCollection struct {
 	Statements []Statement
 }
 
-func (p *Program) String() string {
+func (p *StatementCollection) String() string {
 	var out = ""
 
 	for _, s := range p.Statements {
@@ -55,4 +55,12 @@ func (p *Program) String() string {
 	}
 
 	return out
+}
+
+type Program = StatementCollection
+
+// BlockStatement is a block of code that inside curly brackets, so it attached to token.LBRACE
+type BlockStatement struct {
+	StatementCollection
+	Token token.Token
 }

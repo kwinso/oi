@@ -11,16 +11,16 @@ import "oilang/internal/token"
 //	let x = return a
 type ReturnStatement struct {
 	Node
-	Token token.Token
-	Value Expression
+	Token       token.Token
+	ReturnValue Expression
 }
 
 func (*ReturnStatement) statementNode() {}
 func (rs *ReturnStatement) String() string {
 	out := "return"
 
-	if rs.Value != nil {
-		out += " " + rs.Value.String()
+	if rs.ReturnValue != nil {
+		out += " " + rs.ReturnValue.String()
 	}
 
 	out += ";"

@@ -8,10 +8,10 @@ import (
 	"testing"
 )
 
-func testValidProgram(t *testing.T, program *ast.Program, err *ParsingError, amount int) {
+func testValidProgram(t *testing.T, program *ast.Program, err *ParsingError, statementsLen int) {
 	assert.Nil(t, err)
 	assert.NotNil(t, program)
-	assert.Len(t, program.Statements, amount)
+	assert.Len(t, program.Statements, statementsLen)
 }
 
 func getAsInstanceOf[T any](t *testing.T, val any) *T {
@@ -34,19 +34,19 @@ let z = 10_123.12`
 
 	tests := []string{"x", "y", "z"}
 
-	for i, expected := range tests {
+	for i, test := range tests {
 		let := getAsInstanceOf[ast.LetStatement](t, p.Statements[i])
 		assert.Equal(t, "let", let.Token.Literal)
-		assert.Equal(t, expected, let.Name.Value)
-		assert.Equal(t, expected, let.Name.Token.Literal)
+		assert.Equal(t, test, let.Name.Value)
+		assert.Equal(t, test, let.Name.Token.Literal)
 	}
 }
 
 func TestInvalidStatements(t *testing.T) {
 	tests := []string{"let x 5", "let = 10;", "let 10_123.12"}
 
-	for _, input := range tests {
-		l := lexer.New(input)
+	for _, test := range tests {
+		l := lexer.New(test)
 		p, err := New(l).Parse()
 
 		assert.Nil(t, p)
@@ -98,12 +98,12 @@ func TestIntegerLiterals(t *testing.T) {
 		{"12310", 12310},
 	}
 
-	for i, expected := range tests {
+	for i, test := range tests {
 		stmt := getAsInstanceOf[ast.ExpressionStatement](t, p.Statements[i])
 		id := getAsInstanceOf[ast.IntegerLiteral](t, stmt.Expression)
 
-		assert.Equal(t, expected.lit, id.Token.Literal)
-		assert.Equal(t, expected.val, id.Value)
+		assert.Equal(t, test.lit, id.Token.Literal)
+		assert.Equal(t, test.val, id.Value)
 	}
 }
 
@@ -125,12 +125,12 @@ func TestFloatLiterals(t *testing.T) {
 		{"123100.456", 123100.456},
 	}
 
-	for i, expected := range tests {
+	for i, test := range tests {
 		stmt := getAsInstanceOf[ast.ExpressionStatement](t, p.Statements[i])
 		float := getAsInstanceOf[ast.FloatLiteral](t, stmt.Expression)
 
-		assert.Equal(t, expected.lit, float.Token.Literal)
-		assert.Equal(t, expected.val, float.Value)
+		assert.Equal(t, test.lit, float.Token.Literal)
+		assert.Equal(t, test.val, float.Value)
 	}
 }
 
@@ -248,5 +248,102 @@ func TestBools(t *testing.T) {
 		testValidProgram(t, p, err, 1)
 
 		assert.Equal(t, test.expected, p.String())
+	}
+}
+
+func TestIfExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"if x > y { true } else { false}", "if (x > y) { true } else { false }"},
+		{"if x ** 2 > 128 { 128 }", "if ((x ** 2) > 128) { 128 }"},
+	}
+
+	for _, test := range tests {
+		l := lexer.New(test.input)
+		p, err := New(l).Parse()
+
+		testValidProgram(t, p, err, 1)
+
+		assert.Equal(t, test.expected, p.String())
+	}
+}
+
+func TestFunctions(t *testing.T) {
+	tests := []struct {
+		input        string
+		name         string
+		paramsAmount int
+		isStageFn    bool
+	}{
+		{`fn (x, y) { return x + y }`, "", 2, false},
+		{`fn () { return; }`, "", 0, false},
+		{`fn (x) { return 123; }`, "", 1, false},
+		{`@fn (x, y) { return x + y }`, "", 2, true},
+		{`fn func(x, a, b, y) { true }`, "func", 4, false},
+		{`@fn stage(x, a, z) { true }`, "stage", 3, true},
+	}
+
+	for _, test := range tests {
+		l := lexer.New(test.input)
+		p, err := New(l).Parse()
+
+		testValidProgram(t, p, err, 1)
+		stmt := getAsInstanceOf[ast.ExpressionStatement](t, p.Statements[0])
+		fn := getAsInstanceOf[ast.FunctionLiteral](t, stmt.Expression)
+
+		assert.Lenf(t, fn.Parameters, test.paramsAmount, "parameters amount do not match")
+		if test.name != "" {
+			assert.NotNil(t, fn.Name)
+			assert.Equal(t, test.name, fn.Name.Value)
+		} else {
+			assert.Nil(t, fn.Name)
+		}
+
+		assert.Equal(t, test.isStageFn, fn.IsPipelineStage)
+	}
+
+}
+
+func TestBadIfSyntax(t *testing.T) {
+	tests := []struct {
+		input string
+		error string
+	}{
+		{"if { true } else { false}", "unexpected token"},
+		{"if true  128 }", "expected { for main if branch"},
+		{"if true  { 128 ", "expected } at the end of block"},
+		{"if true  { 128 } else ", "expected { for else branch"},
+	}
+
+	for _, test := range tests {
+		l := lexer.New(test.input)
+		p, err := New(l).Parse()
+
+		assert.Nil(t, p)
+		assert.NotNil(t, err)
+		assert.Equal(t, test.error, err.Message)
+	}
+}
+
+func TestBadFNSyntax(t *testing.T) {
+	tests := []struct {
+		input string
+		error string
+	}{
+		{"fn 1()", "expected function name or ("},
+		{"@fn name()  128 }", "expected { at the start of function body"},
+		{"fn ()  { 128 ", "expected } at the end of block"},
+		{"fn (213)  { 128 ", "expected parameter identifier"},
+	}
+
+	for _, test := range tests {
+		l := lexer.New(test.input)
+		p, err := New(l).Parse()
+
+		assert.Nil(t, p)
+		assert.NotNil(t, err)
+		assert.Equal(t, test.error, err.Message)
 	}
 }

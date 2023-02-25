@@ -53,7 +53,7 @@ const (
 
 	// Piping
 	PIPE_CTX // @
-	PIPE_FN  // @fn
+	STAGE_FN // @fn
 	PIPE_OP  // ->
 )
 

@@ -27,7 +27,7 @@ hello hello_123 _name_ a.b
 		{token.RETURN, "return"},
 		{token.IF, "if"},
 		{token.ELSE, "else"},
-		{token.PIPE_FN, "@fn"},
+		{token.STAGE_FN, "@fn"},
 		{token.PIPE_CTX, "@"},
 		{token.IDENT, "fnot"},
 		{token.NEWLINE, "\n"},

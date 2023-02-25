@@ -74,7 +74,7 @@ func (l *Lexer) NextToken() token.Token {
 		if l.peekNext() == 'f' {
 			l.readNext()
 			if l.readIdentifier() == "fn" {
-				tok.Type = token.PIPE_FN
+				tok.Type = token.STAGE_FN
 				tok.Literal = "@fn"
 				break
 			}

@@ -45,7 +45,7 @@ func _() {
 	_ = x[IF-34]
 	_ = x[ELSE-35]
 	_ = x[PIPE_CTX-36]
-	_ = x[PIPE_FN-37]
+	_ = x[STAGE_FN-37]
 	_ = x[PIPE_OP-38]
 }
 
