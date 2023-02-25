@@ -11,7 +11,7 @@ func (p *Parser) parseInt() (ast.Expression, *ParsingError) {
 
 	v, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
 	if err != nil {
-		return nil, &ParsingError{"unable to parse integer", p.curToken}
+		return nil, p.createCurrentTokenError("unable to parse integer")
 	}
 
 	lit.Value = v
@@ -25,7 +25,7 @@ func (p *Parser) parseFloat() (ast.Expression, *ParsingError) {
 
 	v, err := strconv.ParseFloat(p.curToken.Literal, 64)
 	if err != nil {
-		return nil, &ParsingError{"unable to parse float number", p.curToken}
+		return nil, p.createCurrentTokenError("unable to parse float number")
 	}
 
 	lit.Value = v

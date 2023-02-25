@@ -23,7 +23,7 @@ func (p *Parser) parseExpressionStatement() (*ast.ExpressionStatement, *ParsingE
 func (p *Parser) parseExpression(precedence int) (ast.Expression, *ParsingError) {
 	prefix, ok := p.prefixParsers[p.curToken.Type]
 	if !ok {
-		return nil, &ParsingError{"unexpected token", p.curToken}
+		return nil, p.createCurrentTokenError("unexpected token")
 	}
 
 	leftExp, err := prefix()
