@@ -327,6 +327,47 @@ func TestBadIfSyntax(t *testing.T) {
 	}
 }
 
+func TestExpressionCall(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"1(a, b)", "1(a, b)"},
+		{"a()", "a()"},
+		{"a + b(12)", "(a + b(12))"},
+		{"(c + d)(a, b, 12)", "(c + d)(a, b, 12)"},
+		{"@fn (x, y) { return x > y }(1, 2)", "@fn (x, y) { return (x > y); }(1, 2)"},
+	}
+
+	for _, test := range tests {
+		l := lexer.New(test.input)
+		p, err := New(l).Parse()
+		testValidProgram(t, p, err, 1)
+
+		assert.Equal(t, test.expected, p.String())
+	}
+}
+
+func TestBadExpressionCallSyntax(t *testing.T) {
+	tests := []struct {
+		input string
+		error string
+	}{
+		{"1 a, b)", "unexpected token"},
+		{"a(q", "expected )"},
+		{"a + b(,)", "unexpected token"},
+	}
+
+	for _, test := range tests {
+		l := lexer.New(test.input)
+		p, err := New(l).Parse()
+
+		assert.Nil(t, p)
+		assert.NotNil(t, err)
+		assert.Equal(t, test.error, err.Message)
+	}
+}
+
 func TestBadFNSyntax(t *testing.T) {
 	tests := []struct {
 		input string
